@@ -1,0 +1,87 @@
+/**
+* @file  *** styles
+* @date 2021-12-14
+* @author xuejie.he
+* @lastModify xuejie.he 2021-12-14
+*/
+/* <------------------------------------ **** CONSTANT IMPORT START **** ------------------------------------ */
+/** Import all the reference constant after this line */
+@use "../../Constant/breakPoint.scss" as *;
+@use "../../Constant/color.scss" as *;
+
+/* <------------------------------------ **** CONSTANT IMPORT END **** ------------------------------------ */
+/* <------------------------------------ **** SECTION1 MIXIN START **** ------------------------------------ */
+/** The demo mixin is ..........*/
+@mixin wrapper {
+    min-width: 38rem;
+    background-color: $background;
+    box-shadow: $shadow_06dp;
+    border-radius: 4px;
+    outline: none;
+    @media (max-width: $md) {
+        width: 27.5rem;
+    }
+}
+
+/* <------------------------------------ **** SECTION1 MIXIN END **** ------------------------------------ */
+
+/* <--------------------------- * SECTION1 * --------------------------- */
+
+.datePicker_wrapper {
+    @include wrapper();
+}
+
+.date_picker_panel__showtime {
+    min-width: 58.5rem;
+}
+
+.dateTimePicker_wrapper {
+    @include wrapper();
+}
+
+.date_picker_panel {
+    display: flex;
+    flex-direction: row;
+}
+
+.date_picker_time_wrap {
+    display: flex;
+    flex-direction: column;
+    border-left: 0.1rem solid $neutral_100;
+}
+
+.date_picker_time_title {
+    text-align: center;
+    height: 5.6rem;
+    line-height: 5.6rem;
+    border-bottom: 0.1rem solid $neutral_100;
+    box-sizing: border-box;
+}
+
+.date_picker_operation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.6rem 2.4rem;
+    border-top: 0.1rem solid $neutral_100;
+}
+
+.date_picker_operation__current {
+    color: $primary_600;
+    cursor: pointer;
+}
+
+.date_picker_operation__confirm {
+    width: 6rem;
+    height: 3.2rem;
+    border-radius: 0.6rem;
+    background-color: $primary_600;
+    border: none;
+    color: $background;
+    cursor: pointer;
+}
+
+.date_picker_operation__confirm__disabled {
+    background-color: $neutral_300;
+    cursor: not-allowed;
+}

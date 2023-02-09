@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./font.scss";
 import "./style.scss";
 
 import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
-import { ScrollComponent } from "./Scroll";
 
 export const comms = new PluginComms({
     defaultConfig: new ConfigYML(),
@@ -36,17 +35,11 @@ const Main: React.FC = () => {
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     return (
         <div className="wrapper">
-            <ScrollComponent
-                hidden={{
-                    x: true,
-                }}
-            >
-                <Header />
-                <MainContent />
-            </ScrollComponent>
+            <Header />
+            <MainContent />
         </div>
     );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */
-
+document.documentElement.style.fontSize = "10px";
 void comms.renderOnReady(<Main />);

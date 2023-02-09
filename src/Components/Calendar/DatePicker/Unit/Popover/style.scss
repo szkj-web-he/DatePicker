@@ -1,0 +1,13 @@
+@use "../../../../Constant/font.scss" as *;
+@use "../../../../Constant/color.scss" as *;
+
+.popover_body {
+    border-radius: 4px;
+    background-color: rgba($type, 0.7);
+    box-shadow: $shadow_06dp;
+    color: $background;
+    font: $fs_r_12;
+    line-height: 2rem;
+    padding: 0.7rem 1rem;
+    word-break: keep-all;
+}

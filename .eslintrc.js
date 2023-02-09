@@ -14,7 +14,7 @@ module.exports = {
     plugins: ["react", "react-hooks", "@typescript-eslint", "eslint-plugin-import", "prettier"],
     settings: {
         react: {
-            version: "18.2.0",
+            version: "17.0.2",
         },
         "import/resolver": {
             alias: {

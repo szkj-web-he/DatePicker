@@ -1,0 +1,296 @@
+/**
+* @file  *** styles
+* @date 2021-12-15
+* @author xuejie.he
+* @lastModify xuejie.he 2021-12-15
+*/
+/* <------------------------------------ **** CONSTANT IMPORT START **** ------------------------------------ */
+/** Import all the reference constant after this line */
+@use "../../../../Constant/breakPoint.scss" as *;
+@use "../../../../Constant/font.scss" as *;
+@use "../../../../Constant/color.scss" as *;
+
+/* <------------------------------------ **** CONSTANT IMPORT END **** ------------------------------------ */
+/* <------------------------------------ **** SECTION1 MIXIN START **** ------------------------------------ */
+/** The demo mixin is ..........*/
+
+@mixin iconContainer {
+    width: 1.6rem;
+    height: 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: row nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+@mixin icon {
+    font-size: 1.2rem;
+    color: $line_light;
+}
+
+@mixin row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-flow: row nowrap;
+    width: 100%;
+}
+
+@mixin col {
+    width: 2.2rem;
+    height: 2.2rem;
+}
+
+@mixin resetListStyle {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+@mixin readonly {
+    cursor: auto !important;
+}
+
+/* <------------------------------------ **** SECTION1 MIXIN END **** ------------------------------------ */
+/* <--------------------------- * SECTION1 * --------------------------- */
+/* <--------------------------- * SECTION1 * --------------------------- */
+.dateTemp_top {
+    height: 5.6rem;
+    width: 100%;
+    padding: 0 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-flow: row nowrap;
+    box-sizing: border-box;
+    border-bottom: 0.1rem solid $neutral_100;
+}
+
+.dateTemp_preMonthBtn {
+    @include iconContainer();
+    margin-left: 4px;
+    &:hover {
+        .dateTemp_preMonthIcon {
+            color: rgba($primary_variant, 1);
+        }
+    }
+}
+
+.dateTemp_nextMonth {
+    @include iconContainer();
+    margin-right: 4px;
+    &:hover {
+        .dateTemp_nextMonthIcon {
+            color: rgba($primary_variant, 1);
+        }
+    }
+}
+
+.dateTemp_preMonthIcon {
+    @include icon();
+    transform: rotate(180deg);
+    transition: all 0.2s linear;
+}
+
+.dateTemp_preYearBtn {
+    @include iconContainer();
+    &:hover {
+        .dateTemp_preYearIcon {
+            color: #22a6b3;
+        }
+    }
+}
+
+.dateTemp_nextYearBtn {
+    &:hover {
+        .dateTemp_nextYearIcon {
+            color: #22a6b3;
+        }
+    }
+    @include iconContainer();
+}
+
+.dateTemp_nextMonthIcon {
+    @include icon();
+    transition: all 0.2s linear;
+}
+
+.dateTemp_nextYearIcon {
+    font-size: 1.31rem;
+    color: $line_light;
+    transition: all 0.2s linear;
+}
+
+.dateTemp_preYearIcon {
+    font-size: 1.31rem;
+    color: #bdbdbd;
+    transition: all 0.2s linear;
+}
+
+.dateTemp_monthAndYear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-flow: row nowrap;
+    margin: 0 28px;
+}
+
+.dateTemp_week {
+    @include row();
+}
+
+.dateTemp_weekItem {
+    font: $fs_r_12;
+    line-height: 2rem;
+    width: 2rem;
+    margin-left: 3.2rem;
+
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: $neutral_400;
+    letter-spacing: 0.5px;
+    &:first-child {
+        margin-left: 0;
+    }
+}
+
+.dateTemp_row {
+    @include resetListStyle();
+    @include row();
+    margin-top: 1.2rem;
+}
+
+.dateTemp_col {
+    @include resetListStyle();
+    width: 2rem;
+    margin-left: 28px;
+    &:first-child {
+        margin-left: 0;
+    }
+}
+
+.dateTemp_dayContainer {
+    font: $fs_r_14;
+    width: 2rem;
+    line-height: 2rem;
+    text-align: center;
+    letter-spacing: 0.25px;
+    margin: 0 auto;
+    cursor: pointer;
+    color: $neutral_400;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    &.dateTemp_daySelected {
+        position: relative;
+        color: $background;
+        &::after {
+            content: "";
+            position: absolute;
+            left: -2px;
+            top: -2px;
+            width: 24px;
+            height: 24px;
+            box-sizing: border-box;
+            border-radius: 50%;
+            background-color: $primary_variant;
+            z-index: 1;
+        }
+    }
+
+    &:not(.dateTemp_daySelected).dateTemp_nowDate {
+        position: relative;
+        &::after {
+            content: "";
+            position: absolute;
+            left: -2px;
+            top: -2px;
+            width: 24px;
+            height: 24px;
+            border: 1px solid #757575;
+            box-sizing: border-box;
+            border-radius: 50%;
+        }
+    }
+
+    &.dateTemp_dayGray {
+        color: $line_light;
+    }
+    &.dateTemp_disabled {
+        cursor: not-allowed !important;
+    }
+    &.dateTemp_readonly {
+        @include readonly();
+    }
+}
+
+.dateTemp_colContent {
+    position: relative;
+    z-index: 2;
+}
+
+.dateTemp_yearContainer {
+    margin-right: 2rem;
+}
+
+.dateTemp_dateTime {
+    width: 100%;
+    .dateTemp_row {
+        margin-top: 0.6rem;
+    }
+
+    .dateTemp_week {
+        margin-bottom: 0.7rem;
+    }
+}
+
+.dateTemp_date {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.dateTemp_table {
+    line-height: 22.4rem;
+    padding: 16px 24px;
+}
+
+@media (max-width: $md) {
+    .dateTemp_table {
+        width: calc(100% - 1.6rem);
+        margin: 0 auto;
+    }
+
+    .dateTemp_top {
+        padding: 0 1.3rem;
+    }
+
+    .dateTemp_yearContainer {
+        margin-right: 0.8rem;
+    }
+}
+
+.dateTemp_footer {
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 24px;
+    box-sizing: border-box;
+    border-top: 1px solid #f5f5f5;
+}
+
+.dateTemp_confirmBtn {
+    @include c_label_1();
+    padding: 6px 16px;
+    box-sizing: content-box;
+    border-radius: 6px;
+    color: $white;
+    background: #bdbdbd;
+    &.dateTemp_confirmBtnActive {
+        background-color: #22a6b3;
+        cursor: pointer;
+    }
+}
