@@ -32,10 +32,14 @@ interface TempProps {
      *
      */
     title: string;
+    /**
+     *
+     */
+    disabled?: boolean;
 }
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-const Temp: React.FC<TempProps> = ({ className, children, onClick, title }) => {
+const Temp: React.FC<TempProps> = ({ className, children, onClick, title, disabled }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
@@ -52,6 +56,7 @@ const Temp: React.FC<TempProps> = ({ className, children, onClick, title }) => {
             direction="vertical"
             triangle={{ width: "1rem", height: "0.5rem", color: "rgba(0,0,0,0.7)" }}
             animate="fade"
+            disable={disabled}
         >
             <DropdownBtn className={className} onClick={onClick}>
                 {children}

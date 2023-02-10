@@ -257,21 +257,6 @@
     padding: 16px 24px;
 }
 
-@media (max-width: $md) {
-    .dateTemp_table {
-        width: calc(100% - 1.6rem);
-        margin: 0 auto;
-    }
-
-    .dateTemp_top {
-        padding: 0 1.3rem;
-    }
-
-    .dateTemp_yearContainer {
-        margin-right: 0.8rem;
-    }
-}
-
 .dateTemp_footer {
     height: 62px;
     display: flex;

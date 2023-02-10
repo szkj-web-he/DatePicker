@@ -1,0 +1,68 @@
+/**
+* @file
+* @date 2022-11-08
+* @author
+* @lastModify  2022-11-08
+*/
+/* <------------------------------------ **** CONSTANT IMPORT START **** ------------------------------------ */
+/** Import all the reference constant after this line */
+@use "../Constant/breakPoint.scss" as *;
+@use "../Constant/font.scss" as *;
+@use "../Constant/color.scss" as *;
+/* <------------------------------------ **** CONSTANT IMPORT END **** ------------------------------------ */
+
+/* <--------------------------- * SECTION1 * --------------------------- */
+.picker_container {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+}
+
+.picker_inner {
+    display: flex;
+    justify-items: flex-start;
+    align-items: flex-start;
+    flex-flow: row nowrap;
+    height: 100%;
+}
+
+.picker_column {
+    width: calc(100% / 3);
+    height: 100%;
+}
+
+.picker_item {
+    color: #757575;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-flow: row nowrap;
+}
+
+.picker_itemContent {
+    width: 56px;
+    vertical-align: text-bottom;
+}
+
+.picker_itemData {
+    @include body_1();
+}
+
+.picker_itemUnit {
+    @include c_body_3();
+    margin-left: 3px;
+    display: inline-block;
+}
+
+.picker_highlight {
+    width: 100%;
+    background: #a9e5eb;
+    opacity: 0.3;
+    border-radius: 6px;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}

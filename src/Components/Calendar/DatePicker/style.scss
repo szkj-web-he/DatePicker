@@ -18,9 +18,6 @@
     box-shadow: $shadow_06dp;
     border-radius: 4px;
     outline: none;
-    @media (max-width: $md) {
-        width: 27.5rem;
-    }
 }
 
 /* <------------------------------------ **** SECTION1 MIXIN END **** ------------------------------------ */

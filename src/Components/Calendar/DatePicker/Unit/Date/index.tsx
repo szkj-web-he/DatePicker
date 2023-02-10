@@ -86,15 +86,21 @@ export const DateTemp: React.FC<DateProps> = ({
 
     const [yearList, setYearList] = useState<Label[]>();
 
-    const commonData = useRef<{
-        oldTop?: number;
-    }>({});
-
+    const dateRef = useRef({
+        year,
+        month,
+        day,
+    });
     const [date, setDate] = useState({
         year,
         month,
         day,
     });
+
+    /**
+     * 最小的年
+     */
+    const minYear = 1970;
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
@@ -119,14 +125,18 @@ export const DateTemp: React.FC<DateProps> = ({
             month,
             day,
         });
+        dateRef.current = {
+            year,
+            month,
+            day,
+        };
     }, [year, month, day]);
 
     useEffect(() => {
         if (playedYear) {
-            const start = playedYear - 20;
-            const end = playedYear + 20;
+            const end = playedYear + 10;
             const arr: Label[] = [];
-            for (let i = start; i <= end; i++) {
+            for (let i = minYear; i <= end; i++) {
                 arr.push({
                     id: i,
                     content: i.toString(),
@@ -155,32 +165,21 @@ export const DateTemp: React.FC<DateProps> = ({
         clientWidth: number;
     }) => {
         if (yearList) {
-            let status: 0 | -1 | 1 = 0;
-
-            if (commonData.current.oldTop) {
-                if (res.top - commonData.current.oldTop > 0) {
-                    status = 1;
-                } else if (res.top - commonData.current.oldTop < 0) {
-                    status = -1;
-                }
-            }
-
             const start = yearList[0].id as number;
             const end = yearList[yearList.length - 1].id as number;
 
-            if (res.top < 10 && status === -1) {
+            if (res.top < 10) {
                 let value = start - 10;
-                if (value < 1970) {
-                    value = 1970;
+                if (value < minYear) {
+                    value = minYear;
                 }
                 const arr = makeArr(value, start);
                 setYearList(arr.concat(yearList));
-            } else if (res.scrollHeight - (res.top + res.clientHeight) < 10 && status === 1) {
+            } else if (res.scrollHeight - (res.top + res.clientHeight) < 10) {
                 const arr = makeArr(end + 1, end + 11);
                 setYearList(yearList.concat(arr));
             }
         }
-        commonData.current.oldTop = res.top;
     };
 
     /**
@@ -191,6 +190,9 @@ export const DateTemp: React.FC<DateProps> = ({
             let value = playedMonth - 1;
             if (value < 1) {
                 value = 12;
+                if (playedYear - 1 < minYear) {
+                    return;
+                }
                 setPlayedYear(playedYear - 1);
             }
             setPlayedMonth(value);
@@ -217,7 +219,7 @@ export const DateTemp: React.FC<DateProps> = ({
     const handlePreYearClick = () => {
         setPlayedYear((pre) => {
             if (typeof pre === "number") {
-                return pre - 1;
+                return pre - 1 < minYear ? minYear : pre - 1;
             }
             return pre;
         });
@@ -312,6 +314,11 @@ export const DateTemp: React.FC<DateProps> = ({
                                     className={classList.join(" ")}
                                     onClick={() => {
                                         if (!classList.includes("dateTemp_disabled") && !readonly) {
+                                            dateRef.current = {
+                                                year: dayData.year,
+                                                month: dayData.month,
+                                                day: dayData.date,
+                                            };
                                             setDate({
                                                 year: dayData.year,
                                                 month: dayData.month,
@@ -340,6 +347,7 @@ export const DateTemp: React.FC<DateProps> = ({
                     className={"dateTemp_preYearBtn"}
                     onClick={handlePreYearClick}
                     title="上一年"
+                    disabled={typeof playedYear === "number" && playedYear <= minYear}
                 >
                     <Icon type="last" className={"dateTemp_preYearIcon"} />
                 </Popover>
@@ -348,6 +356,12 @@ export const DateTemp: React.FC<DateProps> = ({
                     className={"dateTemp_preMonthBtn"}
                     onClick={handlePreMonthClick}
                     title="上个月"
+                    disabled={
+                        typeof playedYear === "number" &&
+                        typeof playedMonth === "number" &&
+                        playedYear <= minYear &&
+                        playedMonth === 1
+                    }
                 >
                     <Icon type="open" className={"dateTemp_preMonthIcon"} />
                 </Popover>
@@ -389,13 +403,16 @@ export const DateTemp: React.FC<DateProps> = ({
                         date.year ? " dateTemp_confirmBtnActive" : ""
                     }`}
                     onClick={() => {
-                        console.log(JSON.stringify(date));
                         if (
-                            typeof date.year === "number" &&
-                            typeof date.month === "number" &&
-                            typeof date.day === "number"
+                            typeof dateRef.current.year === "number" &&
+                            typeof dateRef.current.month === "number" &&
+                            typeof dateRef.current.day === "number"
                         ) {
-                            handleDateClick(date.year, date.month, date.day);
+                            handleDateClick(
+                                dateRef.current.year,
+                                dateRef.current.month,
+                                dateRef.current.day,
+                            );
                         }
                     }}
                 >

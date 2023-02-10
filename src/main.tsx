@@ -9,6 +9,8 @@
 import React from "react";
 import { CalendarInput } from "./Components/Calendar/CalendarInput";
 import { DatePicker } from "./Components/Calendar/DatePicker";
+import { CalendarMobile } from "./Components/CalendarMobile";
+import { useMobile } from "./Components/Scroll/Unit/useMobile";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
@@ -19,6 +21,8 @@ const Temp: React.FC = () => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
 
+    const isMobile = useMobile();
+
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
@@ -26,6 +30,10 @@ const Temp: React.FC = () => {
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
+
+    if (isMobile) {
+        return <CalendarMobile></CalendarMobile>;
+    }
     return (
         <DatePicker>
             <CalendarInput placeholder={"请选择日期"} className={"datePicker_iptWrapper"} />
