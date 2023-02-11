@@ -6,98 +6,65 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import React, {
-    MutableRefObject,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { MutableRefObject, useRef, useState } from "react";
 import classNames from "../../Unit/classNames";
 import { mul, sub, sum, toDiv } from "../../Unit/math";
-import { transformValue } from "../../Unit/transformValue";
-import { unit } from "./data";
+import { useUnmount } from "./../../Hooks/useUnmount";
+import { getItemsTranslateY, ItemRectData } from "./getItemsTranslateY";
+import { useEffect } from "react";
+import { ColScrollProps } from "./type";
 
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
-type TransitionType = "wheel" | "touch" | "click";
-
-export type WheelType = "off" | "natural" | "normal";
 
 export interface PickerColumnProps {
-    name: string;
+    /**
+     * 当前选中的值
+     */
     value: string;
-    options: Array<string>;
+    /**
+     * 选项列表
+     *
+     */
+    options: Array<{ id: string; content: React.ReactNode }>;
+    /**
+     * 每个item的高度
+     */
     itemHeight: string;
-    columnHeight: string;
-    wheel?: WheelType;
-    onChange?: (key: string, val: string) => void;
-    onClick?: (key: string, val: string) => void;
+    /**
+     * 每个item的间距
+     */
     margin?: string;
-
     /**
      * 标识选中的块级元素
      */
     viewElement: MutableRefObject<HTMLDivElement | null>;
+    /**
+     * 当value发生改变时
+     */
+    onChange?: (itemId: string) => void;
+    /**
+     * 当滚动时
+     */
+    onScroll?: (res: ColScrollProps) => void;
 }
 
-export interface TransformOptions {
-    startTouchY: number;
-    startScrollerTranslate: number;
-    isMoving: boolean;
-    minTranslate: number;
-    maxTranslate: number;
-}
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
-    const {
-        name,
-        value,
-        options,
-        itemHeight,
-        columnHeight,
-        wheel = "off",
-        onChange,
-        onClick,
-        margin,
-        viewElement,
-    } = props;
+export const PickerColumn: React.FC<PickerColumnProps> = ({
+    value,
+    options,
+    itemHeight,
+    onChange,
+    margin,
+    viewElement,
+    onScroll,
+}) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
-    const getTranslate = useMemo(() => {
-        let selectedIndex = options.indexOf(value);
-        const columnHeightVal = transformValue(columnHeight);
-        const itemHeightVal = transformValue(itemHeight);
-        if (selectedIndex < 0) {
-            // throw new ReferenceError();
-            console.warn(`Warning: "${name}" doesn't contain an option of "${value}".`);
-            onChange?.(name, options[0]);
-            selectedIndex = 0;
-        }
 
-        return {
-            startScrollerTranslate:
-                columnHeightVal / 2 - itemHeightVal / 2 - selectedIndex * itemHeightVal,
-            minTranslate: columnHeightVal / 2 - itemHeightVal * options.length + itemHeightVal / 2,
-            maxTranslate: columnHeightVal / 2 - itemHeightVal / 2,
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [columnHeight, itemHeight, name, options, value]);
-
-    const [scrollerTranslate, setScrollerTranslate] = useState(
-        getTranslate?.startScrollerTranslate ?? 0,
-    );
-
-    const transformOptions = useRef<TransformOptions | null>(null);
-    const transitionType = useRef<TransitionType | null>(null);
-    const clickValue = useRef<string>("");
-    const wheelValue = useRef<string>("");
-    const touchValue = useRef<string>("");
-
-    const srcollerWrapRef = useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     /**
      * 轮询计时器
@@ -126,121 +93,82 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
     const lastTouchSpeed = useRef(0);
 
     /**
-     * 每个item之间的距离
-     * translateY一定得是 itemMargin的倍数
-     */
-    const itemSizeData = useRef({
-        height: 0,
-        totalHeight: 0,
-    });
-
-    /**
      * 向上滚动
      * 向下滚动
      */
     const directionRef = useRef<"toTop" | "toBottom">();
 
-    // useEffect(() => {
-    //     removeEventListener();
+    /**
+     * 所有item的偏移属性
+     */
+    const itemsTranslateY = useRef<ItemRectData[]>();
 
-    //     addEventListener();
-    //     return () => {
-    //         removeEventListener();
-    //     };
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [options]);
+    /**
+     * 保存是否touch move过了
+     * 主要是用来区分click事件
+     */
+    const isTouchMove = useRef(false);
 
-    useLayoutEffect(() => {
-        if (transformOptions.current === null) {
-            transformOptions.current = {
-                isMoving: false,
-                startTouchY: 0,
-                ...getTranslate,
-            };
-        } else {
-            transformOptions.current = {
-                ...transformOptions.current,
-                ...getTranslate,
-            };
-        }
-        const index = options.indexOf(value);
-        const scrollerValue = calcScrollerValue(index);
-        setScrollerTranslate(scrollerValue);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getTranslate, props]);
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
-    // const addEventListener = () => {
-    //     srcollerWrapRef.current?.addEventListener("wheel", handleWheel);
-    //     srcollerWrapRef.current?.addEventListener("touchstart", handleTouchStart);
-    //     srcollerWrapRef.current?.addEventListener("touchmove", handleTouchMove);
-    //     srcollerWrapRef.current?.addEventListener("touchend", handleTouchEnd);
-    //     srcollerWrapRef.current?.addEventListener("touchcancel", handleTouchCancel);
-    // };
+    useUnmount(() => {
+        intervalTimer.current && window.clearInterval(intervalTimer.current);
+        preData.current = {
+            y: 0,
+            time: 0,
+        };
+        lastTouchSpeed.current = 0;
+        directionRef.current = undefined;
+        isTouchMove.current = false;
+    });
 
-    // const removeEventListener = () => {
-    //     srcollerWrapRef.current?.removeEventListener("wheel", handleWheel);
-    //     srcollerWrapRef.current?.removeEventListener("touchstart", handleTouchStart);
-    //     srcollerWrapRef.current?.removeEventListener("touchmove", handleTouchMove);
-    //     srcollerWrapRef.current?.removeEventListener("touchend", handleTouchEnd);
-    //     srcollerWrapRef.current?.removeEventListener("touchcancel", handleTouchCancel);
-    // };
+    useEffect(() => {
+        itemsTranslateY.current = getItemsTranslateY(
+            translateYRef.current,
+            options.map((item) => item.id),
+            ref.current,
+            viewElement.current,
+        );
+
+        const arr = itemsTranslateY.current ?? [];
+        for (let i = 0; i < arr.length; ) {
+            const item = arr[i];
+            if (item.id === value) {
+                translateYRef.current = item.translateY;
+                setTranslateY(item.translateY);
+                i = arr.length;
+            } else {
+                ++i;
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value, options]);
+
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
-    // 过渡结束后 更新组件
-    const handleScrollerTransition = (type: TransitionType) => {
-        switch (type) {
-            case "wheel":
-                {
-                    const option = wheelValue.current;
-                    onChange?.(name, option);
-                }
-                break;
-            case "touch":
-                {
-                    const option = touchValue.current;
-                    onChange?.(name, option);
-                }
-                break;
-            case "click":
-                {
-                    const option = clickValue.current;
-                    if (option === value) {
-                        onClick?.(name, value);
-                    } else {
-                        onChange?.(name, option);
-                    }
-                }
-                break;
+
+    /**
+     * item的点击事件
+     * @param index
+     */
+    const handleItemClick = (index: number) => {
+        const item = itemsTranslateY.current?.[index];
+        if (item) {
+            toBeValue(item.translateY);
         }
-    };
 
-    // 根据下标 计算滚动距离
-    const calcScrollerValue = (selectedIndex: number) => {
-        if (transformOptions.current) {
-            const { maxTranslate } = transformOptions.current;
-            const itemHeightVal = transformValue(itemHeight);
-            return maxTranslate - selectedIndex * itemHeightVal;
+        if (item && item.id !== value) {
+            onChange?.(item.id);
         }
-        return 0;
-    };
-
-    const handleItemClick = (option: string) => {
-        transitionType.current = "click";
-        clickValue.current = option;
-
-        const selectIndex = options.indexOf(option);
-        const scrollerValue = calcScrollerValue(selectIndex);
-        setScrollerTranslate(scrollerValue);
     };
 
     /**
      * 改变偏移值
      */
     const changeTranslateY = (val: number) => {
-        translateYRef.current += val;
+        translateYRef.current = sum(translateYRef.current, val);
         setTranslateY(translateYRef.current);
     };
 
@@ -250,25 +178,37 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
      */
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touchEvent = e.changedTouches[0];
+        intervalTimer.current && window.clearInterval(intervalTimer.current);
 
-        const node = srcollerWrapRef.current?.getElementsByClassName("picker_item")[0] as
-            | HTMLDivElement
-            | undefined;
-
-        const height = node?.offsetHeight ?? 0;
-        const margin = node
-            ? Number(window.getComputedStyle(node, null).marginTop.replace("px", ""))
-            : 0;
-        itemSizeData.current = {
-            height,
-            totalHeight: height + margin,
-        };
+        itemsTranslateY.current = getItemsTranslateY(
+            translateYRef.current,
+            options.map((item) => item.id),
+            ref.current,
+            viewElement.current,
+        );
 
         preData.current = {
             y: touchEvent.pageY,
             time: Date.now(),
         };
     };
+
+    /**
+     * 获取滚动值
+     */
+    const getScrollData = () => {
+        const el = ref.current;
+        const scrollEl = ref.current?.getElementsByClassName("picker_scroller") as
+            | HTMLElement
+            | undefined;
+
+        onScroll?.({
+            scrollHeight: scrollEl?.offsetHeight ?? 0,
+            scrollTop: -translateYRef.current,
+            offsetHeight: el?.offsetHeight ?? 0,
+        });
+    };
+
     /**
      * 触摸中
      * 用新的坐标 减去初始的坐标 都是y轴
@@ -277,7 +217,7 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
         const touchEvent = e.changedTouches[0];
 
         const y = touchEvent.pageY;
-
+        isTouchMove.current = true;
         /**
          * 获取移动的方向
          */
@@ -285,8 +225,6 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
             directionRef.current = "toBottom";
         } else if (y < preData.current.y) {
             directionRef.current = "toTop";
-        } else {
-            directionRef.current = undefined;
         }
 
         /**
@@ -295,6 +233,8 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
         const moveY = sub(y, preData.current.y);
 
         changeTranslateY(moveY);
+
+        getScrollData();
 
         preData.current.y = y;
         /**
@@ -309,24 +249,37 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
     };
 
     /**
-     * 轮询移动
+     * 将偏移值变着它
+     * @param end
+     * @returns
      */
-    const toMoveInterval = (total: number) => {
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
-        // let total = res;
+    const toBeValue = (end: number) => {
+        console.log("toBeValue", end);
+        console.log("current", translateYRef.current);
 
-        let count = 0;
-        const marginVal = total > 0 ? 1 : -1;
+        intervalTimer.current && window.clearInterval(intervalTimer.current);
+
+        if (end === translateYRef.current) {
+            return;
+        }
+        let marginVal = 0;
+        if (end > translateYRef.current) {
+            marginVal = 1;
+        } else {
+            marginVal = -1;
+        }
 
         intervalTimer.current = window.setInterval(() => {
-            count += marginVal;
-
-            if (Math.abs(sub(total, count)) < 2) {
-                changeTranslateY(sub(total, count));
+            const value = sum(translateYRef.current, marginVal);
+            if (Math.abs(sub(end, value)) < 1) {
+                translateYRef.current = end;
+                setTranslateY(translateYRef.current);
+                getScrollData();
                 intervalTimer.current && window.clearInterval(intervalTimer.current);
                 intervalTimer.current = null;
             } else {
                 changeTranslateY(marginVal);
+                getScrollData();
             }
         });
     };
@@ -337,32 +290,41 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
      */
 
     const findTopNode = () => {
+        intervalTimer.current && window.clearInterval(intervalTimer.current);
         console.log("findTopNode");
-        const nodes = srcollerWrapRef.current?.getElementsByClassName("picker_item");
-        const bottom = viewElement.current?.getBoundingClientRect().bottom;
 
-        if (nodes === undefined || bottom === undefined) {
+        const itemsRect = itemsTranslateY.current;
+
+        const translateYVal = translateYRef.current;
+        if (itemsRect === undefined) {
             return;
         }
+        let val: number | null = null;
+        for (let i = itemsRect.length - 1; i >= 0; ) {
+            const item = itemsRect[i];
+            const itemBottom = sub(item.translateY, item.height);
 
-        let nodeBottomValue: number | null = null;
+            const viewBottom = sub(translateYVal, item.height);
 
-        for (let i = 0; i < nodes.length; i++) {
-            const nodeBottom = nodes[i].getBoundingClientRect().bottom;
-            if (nodeBottom < bottom) {
-                if (typeof nodeBottomValue === "number") {
-                    nodeBottomValue = nodeBottomValue > nodeBottom ? nodeBottomValue : nodeBottom;
-                } else {
-                    nodeBottomValue = nodeBottom;
+            if (itemBottom > viewBottom) {
+                if (value !== item.id) {
+                    onChange?.(item.id);
                 }
+                val = item.translateY;
+                i = -1;
+            } else {
+                --i;
             }
         }
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
-        if (nodeBottomValue === null) {
-            nodeBottomValue = nodes[0].getBoundingClientRect().bottom;
+
+        if (val === null) {
+            toBeValue(itemsRect[0].translateY);
+            if (value !== itemsRect[0].id) {
+                onChange?.(itemsRect[0].id);
+            }
+        } else {
+            toBeValue(val);
         }
-        console.log("没有速度", "向下移动");
-        toMoveInterval(sub(bottom, nodeBottomValue));
     };
 
     /**
@@ -370,87 +332,145 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
      * 且top值最相近的一个节点
      */
     const findUnderNode = () => {
+        intervalTimer.current && window.clearInterval(intervalTimer.current);
         console.log("findUnderNode");
-        const nodes = srcollerWrapRef.current?.getElementsByClassName("picker_item");
-        const top = viewElement.current?.getBoundingClientRect().top;
 
-        let nodeTopValue: number | null = null;
-        if (top === undefined || nodes === undefined) {
+        const itemsRect = itemsTranslateY.current;
+
+        const translateYVal = translateYRef.current;
+
+        if (itemsRect === undefined) {
             return;
         }
+        let val: number | null = null;
+        for (let i = 0; i < itemsRect.length; ) {
+            const item = itemsRect[i];
 
-        for (let i = 0; i < nodes.length; i++) {
-            const nodeTop = nodes[i].getBoundingClientRect().top;
-
-            if (nodeTop > top) {
-                if (typeof nodeTopValue === "number") {
-                    nodeTopValue = nodeTopValue < nodeTop ? nodeTopValue : nodeTop;
-                } else {
-                    nodeTopValue = nodeTop;
+            if (item.translateY < translateYVal) {
+                if (value !== item.id) {
+                    onChange?.(item.id);
                 }
+
+                val = item.translateY;
+                i = itemsRect.length;
+            } else {
+                ++i;
             }
         }
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
+        if (val === null) {
+            const lastItem = itemsRect[itemsRect.length - 1];
+            toBeValue(lastItem.translateY);
 
-        if (nodeTopValue === null) {
-            nodeTopValue = nodes[nodes.length - 1].getBoundingClientRect().top;
+            if (value !== lastItem.id) {
+                onChange?.(lastItem.id);
+            }
+        } else {
+            toBeValue(val);
         }
-        console.log("没有速度", "向上移动");
-        toMoveInterval(sub(top, nodeTopValue));
     };
 
     /**
      * 找一个自身一半的内容在视口的节点
      */
     const findSelectNode = () => {
-        const nodes = srcollerWrapRef.current?.getElementsByClassName("picker_item");
-        const rect = viewElement.current?.getBoundingClientRect();
-        if (nodes === undefined || rect === undefined) {
+        const itemsTranslateYData = itemsTranslateY.current;
+
+        const translateYVal = translateYRef.current;
+
+        if (itemsTranslateYData === undefined) {
             return;
         }
 
-        for (let i = 0; i < nodes.length; ) {
-            const node = nodes[i];
+        let selectIndex = -1;
 
-            const nodeRect = node.getBoundingClientRect();
+        for (let i = 0; i < itemsTranslateYData.length; ) {
+            const itemData = itemsTranslateYData[i];
 
-            if (nodeRect.top === rect.top) {
+            /**
+             * 视口的bottom
+             */
+            const viewBottom = translateYVal - itemData.height;
+
+            /**
+             * item的bottom
+             */
+            const itemBottom = itemData.translateY - itemData.height;
+
+            if (itemData.translateY === translateYVal) {
                 /**
                  * 刚好停在了合适的位置
                  */
-                i = nodes.length;
-            } else if (nodeRect.top > rect.top && nodeRect.top < rect.bottom) {
+                selectIndex = i;
+                i = itemsTranslateYData.length;
+            } else if (itemData.translateY < translateYVal && viewBottom < itemData.translateY) {
                 /**
+                 * item的头在视口里
                  * 当前节点与视口发生了交集
                  */
-                if (sub(rect.bottom, nodeRect.top) >= toDiv(nodeRect.height, 2)) {
+                if (Math.abs(sub(viewBottom, itemData.translateY)) >= toDiv(itemData.height, 2)) {
                     /**
                      * 当前节点的一半以上的身体在视口内
                      */
-                    i = nodes.length;
+                    selectIndex = i;
+                    i = itemsTranslateYData.length;
                     //需要移动的距离 向上移动
-                    console.log("移动较小", "向上移动");
-                    toMoveInterval(sub(rect.top, nodeRect.top));
+                    toBeValue(itemData.translateY);
+                    if (value !== itemData.id) {
+                        onChange?.(itemData.id);
+                    }
                 } else {
                     ++i;
                 }
-            } else if (nodeRect.bottom > rect.top && nodeRect.bottom < rect.bottom) {
+            } else if (itemBottom < translateYVal && itemBottom > viewBottom) {
                 /**
+                 * item的脚在视口里
                  * 当前节点与视口发生了交集
                  */
 
-                if (sub(nodeRect.bottom, rect.top) >= toDiv(nodeRect.height, 2)) {
+                if (Math.abs(sub(itemBottom, translateYVal)) >= toDiv(itemData.height, 2)) {
                     /**
                      * 当前节点的一半以上的身体在视口内
                      */
-                    i = nodes.length;
+                    selectIndex = i;
+                    i = itemsTranslateYData.length;
                     //需要移动的距离  向下移动
-                    toMoveInterval(sub(rect.bottom, nodeRect.bottom));
+                    toBeValue(itemData.translateY);
+                    if (value !== itemData.id) {
+                        onChange?.(itemData.id);
+                    }
                 } else {
                     ++i;
                 }
             } else {
                 ++i;
+            }
+        }
+
+        if (selectIndex === -1) {
+            const firstNode = itemsTranslateYData[0];
+
+            const lastNode = itemsTranslateYData[itemsTranslateYData.length - 1];
+
+            if (firstNode.translateY < translateYVal) {
+                toBeValue(firstNode.translateY);
+                if (firstNode.id !== value) {
+                    onChange?.(firstNode.id);
+                }
+            } else if (translateYVal < lastNode.translateY) {
+                toBeValue(lastNode.translateY);
+                if (lastNode.id !== value) {
+                    onChange?.(lastNode.id);
+                }
+            } else {
+                for (let i = 0; i < itemsTranslateYData.length; ) {
+                    const item = itemsTranslateYData[i];
+                    if (item.id === value) {
+                        toBeValue(item.translateY);
+                        i = itemsTranslateYData.length;
+                    } else {
+                        ++i;
+                    }
+                }
             }
         }
     };
@@ -463,16 +483,28 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
      *
      */
     const handleTouchEnd = () => {
+        if (!isTouchMove.current) {
+            return;
+        }
+
+        isTouchMove.current = false;
+
         let startTime = Date.now();
-        console.log(" ");
-        console.log("开始速度", lastTouchSpeed.current);
         const currentSpeed = lastTouchSpeed.current;
-        if (directionRef.current === undefined || Math.abs(currentSpeed) <= 0.5) {
+        console.log("当前速度", currentSpeed);
+
+        const minSpeed = 0.5;
+
+        if (directionRef.current === undefined || Math.abs(currentSpeed) <= minSpeed) {
+            /**
+             * 没有速度
+             * 或者没有 移动的方向
+             */
             findSelectNode();
             return;
         }
 
-        const el = srcollerWrapRef.current;
+        const el = ref.current;
         if (!el) {
             return;
         }
@@ -480,9 +512,6 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
         if (!scrollEl) {
             return;
         }
-        const viewHeight =
-            scrollEl.offsetHeight + (el.offsetHeight - itemSizeData.current.totalHeight * 2);
-        console.log(viewHeight, "viewHeight");
 
         intervalTimer.current = window.setInterval(() => {
             const currentTime = Date.now();
@@ -493,38 +522,36 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
             /**
              * 速度递减
              */
+
             /**
-             *
              * 加个限制
              * 当滚动的距离超过了滚动容器
              * 则  不再进行滚动
-             *
              */
 
-            // if (scrollEl.scrollHeight - scrollEl.offsetHeight) {
-
-            // }
-            if (lastTouchSpeed.current > 0.4) {
-                lastTouchSpeed.current = sub(lastTouchSpeed.current, 0.02);
-                const moveVal = mul(offsetTime, lastTouchSpeed.current);
-                changeTranslateY(moveVal);
-                return;
-            } else if (lastTouchSpeed.current < -0.4) {
-                lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.02);
-                const moveVal = mul(offsetTime, lastTouchSpeed.current);
-                changeTranslateY(moveVal);
-                return;
+            if (
+                scrollEl.scrollHeight >= Math.abs(translateYRef.current) &&
+                translateYRef.current <= el.offsetHeight
+            ) {
+                if (lastTouchSpeed.current > minSpeed) {
+                    lastTouchSpeed.current = sub(lastTouchSpeed.current, 0.1);
+                    const moveVal = mul(offsetTime, lastTouchSpeed.current);
+                    changeTranslateY(moveVal);
+                    getScrollData();
+                    return;
+                } else if (lastTouchSpeed.current < -1 * minSpeed) {
+                    lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.1);
+                    const moveVal = mul(offsetTime, lastTouchSpeed.current);
+                    changeTranslateY(moveVal);
+                    getScrollData();
+                    return;
+                }
             }
 
             /**
-             * 当速度在小于0.1的时候
+             * 当速度在小于1的时候
              * 要找到合适的位置停
              */
-            /**
-             * 速度为负数的时候
-             * 要
-             */
-            console.log(lastTouchSpeed.current);
             intervalTimer.current && window.clearInterval(intervalTimer.current);
             if (directionRef.current === "toBottom") {
                 findTopNode();
@@ -538,52 +565,45 @@ export const PickerColumn: React.FC<PickerColumnProps> = (props) => {
      *
      * 不触发自动滚动
      */
-    const handleTouchCancel = (e: React.TouchEvent<HTMLDivElement>) => {};
-
-    const renderItems = () => {
-        return options.map((option, index) => {
-            const style: React.CSSProperties = {
-                height: itemHeight,
-                lineHeight: itemHeight,
-                marginTop: index ? margin : undefined,
-            };
-            return (
-                <div
-                    key={index}
-                    style={style}
-                    className={classNames("picker_item", {
-                        picker_item_selected: option === value,
-                    })}
-                    onClick={() => handleItemClick(option)}
-                >
-                    <div className="picker_itemContent">
-                        <span className="picker_itemData">{option}</span>
-                        <span className="picker_itemUnit">{unit[name]}</span>
-                    </div>
-                </div>
-            );
-        });
+    const handleTouchCancel = () => {
+        findSelectNode();
+        isTouchMove.current = false;
     };
+
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
-    // const translateString = `translateT(${scrollerTranslate}px)`;
     return (
         <div
             className={"picker_column"}
-            ref={srcollerWrapRef}
+            ref={ref}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
         >
-            <div
-                className={"picker_scroller"}
-                style={{ transform: `translateY(${translateY}px)` }}
-                onTransitionEnd={() => {
-                    if (transitionType.current) handleScrollerTransition(transitionType.current);
-                    transitionType.current = null;
-                }}
-            >
-                {renderItems()}
+            <div className={"picker_scroller"} style={{ transform: `translateY(${translateY}px)` }}>
+                {options.map((option, index) => {
+                    const style: React.CSSProperties = {
+                        height: itemHeight,
+                        lineHeight: itemHeight,
+                        marginTop: index ? margin : undefined,
+                    };
+                    return (
+                        <div
+                            key={index}
+                            style={style}
+                            className={classNames("picker_item", {
+                                picker_item_selected: option.id === value,
+                            })}
+                            onClick={() => handleItemClick(index)}
+                        >
+                            <div className="picker_itemContent">
+                                {option.content}
+                                {/* <span className="picker_itemData">{option.content}</span>
+                                <span className="picker_itemUnit">{unit[name]}</span> */}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

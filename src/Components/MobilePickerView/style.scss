@@ -45,16 +45,6 @@
     vertical-align: text-bottom;
 }
 
-.picker_itemData {
-    @include body_1();
-}
-
-.picker_itemUnit {
-    @include c_body_3();
-    margin-left: 3px;
-    display: inline-block;
-}
-
 .picker_highlight {
     width: 100%;
     background: #a9e5eb;

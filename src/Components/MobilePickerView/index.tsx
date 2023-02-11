@@ -6,52 +6,84 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import React from "react";
+import React, { useRef } from "react";
 import classNames from "../Unit/classNames";
 import "./style.scss";
-import { PickerColumn, WheelType } from "./Unit/PickerColumn";
-import { useRef } from "react";
+import { PickerColumn } from "./Unit/PickerColumn";
+import { ColScrollProps } from "./Unit/type";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
 
-interface ValGroups {
-    [key: string]: string;
-}
-
-interface OptGroups {
-    [key: string]: Array<string>;
+interface OptionItem {
+    id: string;
+    cols: Array<{
+        content: React.ReactNode;
+        id: string;
+    }>;
 }
 
 export interface MobilePickerViewProps {
-    className?: string;
-    style?: React.CSSProperties;
-    valueGroups: ValGroups;
-    optionGroups: OptGroups;
-    itemHeight?: string;
-    height?: string;
-    wheel?: WheelType;
-    onChange?: (key: string, val: string) => void;
-    onClick?: (key: string, val: string) => void;
     /**
-     * 每个item之间的间距
+     * 这个组件的className
+     */
+    className?: string;
+    /**
+     * 这个组件的style
+     */
+    style?: React.CSSProperties;
+
+    /**
+     * 选项列表
+     */
+    options: Array<OptionItem>;
+
+    /**
+     * 答案列表
+     * 键是 行的id
+     * 值是 列选中的id
+     */
+    values: Record<string, string>;
+
+    /**
+     * 列的每个单元的高度
+     */
+    itemHeight?: string;
+
+    /**
+     *
+     * @param key 哪一行的id
+     * @param val 列选中的单元的id
+     * @returns
+     */
+    onChange?: (key: string, val: string) => void;
+
+    /**
+     * 列的每个单元的间距
      */
     margin?: string;
+    /**
+     * 视口的高度
+     */
+    viewHeight?: string;
+    /**
+     * 滚动
+     */
+    onScroll?: (colId: string, scrollData: ColScrollProps) => void;
 }
 
 export const MobilePickerView: React.FC<MobilePickerViewProps> = ({
     className,
     style,
-    valueGroups,
-    optionGroups,
     itemHeight = "3.2rem",
-    height = "21.6rem",
+    viewHeight = "21.6rem",
     margin = "0.4rem",
-    wheel = "off",
+    options,
+    values,
     onChange,
-    onClick,
+    onScroll,
 }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
@@ -65,22 +97,26 @@ export const MobilePickerView: React.FC<MobilePickerViewProps> = ({
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
 
     return (
-        <div className={classNames("picker_container", className)} style={{ height, ...style }}>
+        <div
+            className={classNames("picker_container", className)}
+            style={{ height: viewHeight, ...style }}
+        >
             <div className={"picker_inner"}>
-                {Object.keys(optionGroups).map((name) => {
+                {options.map((col) => {
                     return (
                         <PickerColumn
-                            key={name}
-                            name={name}
-                            value={valueGroups[name]}
-                            options={optionGroups[name]}
+                            key={col.id}
+                            value={values[col.id]}
+                            options={col.cols}
                             itemHeight={itemHeight}
-                            columnHeight={height}
                             margin={margin}
-                            wheel={wheel}
-                            onChange={onChange}
-                            onClick={onClick}
+                            onChange={(res) => {
+                                onChange?.(col.id, res);
+                            }}
                             viewElement={viewRef}
+                            onScroll={(res) => {
+                                onScroll?.(col.id, res);
+                            }}
                         />
                     );
                 })}

@@ -6,14 +6,9 @@
  */
 
 import { useEffect } from "react";
-import { isDev, isFunction } from "../Unit/utils";
 import { useLatest } from "./useLatest";
 
 export const useUnmount = (fn: () => void) => {
-    if (isDev && !isFunction(isFunction)) {
-        console.error(`useUnmount expected parameter is a function, got ${typeof fn}`);
-    }
-
     const fnRef = useLatest(fn);
 
     useEffect(
