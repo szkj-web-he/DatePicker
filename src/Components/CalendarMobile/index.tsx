@@ -200,7 +200,20 @@ export const CalendarMobile: React.FC<CalendarMobileProps> = ({
                             month: playedMonth.toString(),
                             day: playedDay.toString(),
                         }}
-                        options={initOptions()}
+                        options={[
+                            {
+                                id: "year",
+                                cols: yearList,
+                            },
+                            {
+                                id: "month",
+                                cols: getMonthList(),
+                            },
+                            {
+                                id: "day",
+                                cols: dayList,
+                            },
+                        ]}
                         onScroll={(col, res) => {
                             if (col === "year") {
                                 if (res.scrollTop + res.offsetHeight >= res.scrollHeight) {

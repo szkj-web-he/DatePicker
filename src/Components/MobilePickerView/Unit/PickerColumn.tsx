@@ -7,6 +7,7 @@
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
 import React, {
+    forwardRef,
     MutableRefObject,
     useImperativeHandle,
     useLayoutEffect,
@@ -16,11 +17,11 @@ import React, {
 import { usePopupContext } from "../../Popup/Unit/context";
 import classNames from "../../Unit/classNames";
 import { mul, sub, sum, toDiv } from "../../Unit/math";
-import { useUnmount } from "./../../Hooks/useUnmount";
-import { getItemsTranslateY, ItemRectData } from "./getItemsTranslateY";
-import { ColScrollProps } from "./type";
 import { useLatest } from "./../../Hooks/useLatest";
-import { forwardRef } from "react";
+import { useUnmount } from "./../../Hooks/useUnmount";
+import { getItemsTranslateY } from "./getItemsTranslateY";
+import { ColScrollProps } from "./type";
+import useEventListener from "./../../Hooks/useEventListener";
 
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
@@ -78,6 +79,8 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
 
     const ref = useRef<HTMLDivElement>(null);
 
+    const optionIds = useLatest(options.map((item) => item.id));
+
     /**
      * 轮询计时器
      */
@@ -111,11 +114,6 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
     const directionRef = useRef<"toTop" | "toBottom">();
 
     /**
-     * 所有item的偏移属性
-     */
-    const itemsTranslateY = useRef<ItemRectData[]>();
-
-    /**
      * 保存是否touch move过了
      * 主要是用来区分click事件
      */
@@ -132,13 +130,13 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      */
     const valueRef = useLatest(value);
 
-    const optionsRef = useLatest(options);
+    const isTouchStart = useRef(false);
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
     useUnmount(() => {
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
+        intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
         preData.current = {
             y: 0,
             time: 0,
@@ -146,18 +144,19 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
         lastTouchSpeed.current = 0;
         directionRef.current = undefined;
         isTouchMove.current = false;
+        isTouchStart.current = false;
     });
 
     useLayoutEffect(() => {
         if (show && transitionStatus) {
-            itemsTranslateY.current = getItemsTranslateY(
+            const itemsTranslateY = getItemsTranslateY(
                 translateYRef.current,
-                optionsRef.current.map((item) => item.id),
+                optionIds.current,
                 ref.current,
                 viewElement.current,
             );
 
-            const arr = itemsTranslateY.current ?? [];
+            const arr = itemsTranslateY ?? [];
             for (let i = 0; i < arr.length; ) {
                 const item = arr[i];
 
@@ -179,26 +178,31 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
 
     useImperativeHandle(eventProps, () => ({
         scrollToId: (id: string) => {
-            jumpTo(id, 200);
+            jumpTo(id);
         },
     }));
 
     /**
      * item的点击事件
      */
-    const jumpTo = (id: string, ms?: number) => {
-        const arr = itemsTranslateY.current ?? [];
+    const jumpTo = (id: string) => {
+        const arr =
+            getItemsTranslateY(
+                translateYRef.current,
+                optionIds.current,
+                ref.current,
+                viewElement.current,
+            ) ?? [];
         for (let i = 0; i < arr.length; ) {
             const item = arr[i];
             if (item.id === id) {
-                toBeValue(item.translateY, ms);
+                toBeValue(item.translateY, 500);
 
                 i = arr.length;
             } else {
                 ++i;
             }
         }
-
         onChange?.(id);
     };
 
@@ -214,22 +218,26 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      * 开始触摸
      * 记录开始 y轴的初始坐标
      */
-    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const handleTouchStart = (e: TouchEvent) => {
+        if (!e.cancelable) {
+            return;
+        }
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        isTouchStart.current = true;
+
         const touchEvent = e.changedTouches[0];
         intervalTimer.current && window.clearInterval(intervalTimer.current);
-
-        itemsTranslateY.current = getItemsTranslateY(
-            translateYRef.current,
-            options.map((item) => item.id),
-            ref.current,
-            viewElement.current,
-        );
 
         preData.current = {
             y: touchEvent.pageY,
             time: Date.now(),
         };
     };
+
+    useEventListener("touchstart", handleTouchStart, ref, {
+        passive: false,
+    });
 
     /**
      * 获取滚动值
@@ -251,7 +259,13 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      * 触摸中
      * 用新的坐标 减去初始的坐标 都是y轴
      */
-    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const handleTouchMove = (e: TouchEvent) => {
+        if (!isTouchStart.current) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
         const touchEvent = e.changedTouches[0];
 
         const y = touchEvent.pageY;
@@ -285,6 +299,7 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
 
         preData.current.time = time;
     };
+    useEventListener("touchmove", handleTouchMove, ref);
 
     /**
      * 将偏移值变着它
@@ -292,8 +307,8 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      * @param ms 有没有时间限制
      * @returns
      */
-    const toBeValue = (end: number, ms?: number) => {
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
+    const toBeValue = (end: number, ms = 100) => {
+        intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
 
         if (end === translateYRef.current) {
             return;
@@ -309,42 +324,35 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
         }
 
         let marginVal = 0;
-        let startTime: number | null = null;
-        if (ms === undefined) {
-            if (end > translateYRef.current) {
-                marginVal = 1;
-            } else {
-                marginVal = -1;
-            }
-        } else {
-            startTime = Date.now();
-            marginVal = (end - translateYRef.current) / ms;
-        }
 
-        intervalTimer.current = window.setInterval(() => {
+        let startTime = Date.now();
+        marginVal = (end - translateYRef.current) / ms;
+
+        const animationFn = () => {
             let moveVal = marginVal;
-            if (startTime) {
-                const currentTime = Date.now();
-                const offsetTimeVal = currentTime - startTime;
-                startTime = currentTime;
-                moveVal = mul(offsetTimeVal * marginVal);
-            }
-            const value = sum(translateYRef.current, moveVal);
+            const currentTime = Date.now();
+            const offsetTimeVal = currentTime - startTime;
+            startTime = currentTime;
+            moveVal = mul(offsetTimeVal * marginVal);
 
             if (
-                (moveVal > 0 && sub(end, value) <= moveVal) ||
-                (moveVal < 0 && sub(end, value) >= moveVal)
+                (moveVal > 0 && sub(end, translateYRef.current) <= mul(moveVal, 2)) ||
+                (moveVal < 0 && sub(end, translateYRef.current) >= mul(moveVal, 2))
             ) {
                 translateYRef.current = end;
                 setTranslateY(translateYRef.current);
                 getScrollData();
-                intervalTimer.current && window.clearInterval(intervalTimer.current);
+                intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
                 intervalTimer.current = null;
-            } else {
-                changeTranslateY(marginVal);
-                getScrollData();
+                return;
             }
-        });
+
+            changeTranslateY(moveVal);
+            getScrollData();
+            intervalTimer.current = window.requestAnimationFrame(animationFn);
+        };
+
+        intervalTimer.current = window.requestAnimationFrame(animationFn);
     };
 
     /**
@@ -353,9 +361,14 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      */
 
     const findTopNode = () => {
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
+        const itemsRect = getItemsTranslateY(
+            translateYRef.current,
+            optionIds.current,
+            ref.current,
+            viewElement.current,
+        );
 
-        const itemsRect = itemsTranslateY.current;
+        intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
 
         const translateYVal = translateYRef.current;
         if (itemsRect === undefined) {
@@ -394,9 +407,14 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      * 且top值最相近的一个节点
      */
     const findUnderNode = () => {
-        intervalTimer.current && window.clearInterval(intervalTimer.current);
+        intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
 
-        const itemsRect = itemsTranslateY.current;
+        const itemsRect = getItemsTranslateY(
+            translateYRef.current,
+            optionIds.current,
+            ref.current,
+            viewElement.current,
+        );
 
         const translateYVal = translateYRef.current;
 
@@ -434,7 +452,12 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      * 找一个自身一半的内容在视口的节点
      */
     const findSelectNode = () => {
-        const itemsTranslateYData = itemsTranslateY.current;
+        const itemsTranslateYData = getItemsTranslateY(
+            translateYRef.current,
+            optionIds.current,
+            ref.current,
+            viewElement.current,
+        );
 
         const translateYVal = translateYRef.current;
 
@@ -536,7 +559,7 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      *
      */
     const handleTouchEnd = () => {
-        if (!isTouchMove.current) {
+        if (!isTouchMove.current || !isTouchStart.current) {
             return;
         }
         isTouchMove.current = false;
@@ -564,7 +587,8 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
             return;
         }
 
-        intervalTimer.current = window.setInterval(() => {
+        // const
+        const animationFrameFn = () => {
             const currentTime = Date.now();
 
             const offsetTime = sub(currentTime, startTime);
@@ -589,12 +613,14 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
                     const moveVal = mul(offsetTime, lastTouchSpeed.current);
                     changeTranslateY(moveVal);
                     getScrollData();
+                    intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
                     return;
                 } else if (lastTouchSpeed.current < -1 * minSpeed) {
                     lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.1);
                     const moveVal = mul(offsetTime, lastTouchSpeed.current);
                     changeTranslateY(moveVal);
                     getScrollData();
+                    intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
                     return;
                 }
             }
@@ -603,37 +629,38 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
              * 当速度在小于1的时候
              * 要找到合适的位置停
              */
-            intervalTimer.current && window.clearInterval(intervalTimer.current);
+            intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
+
             if (directionRef.current === "toBottom") {
                 findTopNode();
                 return;
             }
             findUnderNode();
-        });
+        };
+        intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
     };
+
+    useEventListener("touchend", handleTouchEnd, ref);
+
     /**
      * 触摸取消
      *
      * 不触发自动滚动
      */
     const handleTouchCancel = () => {
-        if (!isTouchMove.current) {
+        if (!isTouchMove.current || !isTouchStart.current) {
             return;
         }
         findSelectNode();
         isTouchMove.current = false;
+        intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
     };
+
+    useEventListener("touchcancel", handleTouchCancel, ref);
 
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     return (
-        <div
-            className={"picker_column"}
-            ref={ref}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-        >
+        <div className={"picker_column"} ref={ref}>
             <div className={"picker_scroller"} style={{ transform: `translateY(${translateY}px)` }}>
                 {options.map((option, index) => {
                     const style: React.CSSProperties = {

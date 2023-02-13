@@ -30,6 +30,7 @@
 .picker_column {
     width: calc(100% / 3);
     height: 100%;
+    touch-action: none;
 }
 
 .picker_item {

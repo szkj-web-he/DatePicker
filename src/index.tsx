@@ -1,10 +1,13 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./font.scss";
 import "./style.scss";
 
 import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
+// import VConsole from "vconsole";
+
+// new VConsole();
 
 export const comms = new PluginComms({
     defaultConfig: new ConfigYML(),

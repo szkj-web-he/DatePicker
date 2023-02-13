@@ -11,6 +11,7 @@ export interface NodeProps {
 export const getDays = (year: number, month: number): Array<NodeProps> => {
     const nodes: Array<NodeProps> = [];
     const days = new Date(Number(year), Number(month), 0).getDate();
+    // console.log("year", year, "month", Number(month) - 1, "days", days);
 
     for (let i = 1; i <= days; i++) {
         nodes.push({
