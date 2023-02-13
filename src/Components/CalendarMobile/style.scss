@@ -64,3 +64,60 @@
     background-color: #ebebeb;
     margin-bottom: 36px;
 }
+
+.calendarMobile_itemContent {
+    @include body_1();
+}
+
+.calendarMobile_itemUnit {
+    @include c_body_3();
+    margin-left: 3px;
+    display: inline-block;
+}
+
+.mobileCalendarInput_wrapper {
+    position: relative;
+    display: inline-flex;
+    border-radius: 6px;
+    border: 1px solid #ebebeb;
+    transition: all 0.2s linear;
+    padding: 10px 16px;
+    @include body_2();
+    box-sizing: border-box;
+    color: #4d4d4d;
+    align-items: center;
+    justify-content: flex-start;
+    .mobileCalendarInput_Active {
+        border-color: #67cdd6;
+    }
+}
+
+.mobileCalendarInput_placeholder {
+    @include c_body_3();
+    color: #bdbdbd;
+}
+
+.mobileCalendarInput_icon {
+    position: absolute;
+    right: 1rem;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.mobileCalendarInput_clearIcon {
+    font-size: 1.6rem;
+    color: $line_light;
+    cursor: pointer;
+}
+
+.mobileCalendarInput_calendarIcon {
+    font-size: 1.6rem;
+    color: $line_light;
+}

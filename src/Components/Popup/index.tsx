@@ -12,6 +12,8 @@ import { mountElement } from "../Common/Portal/mount";
 import { Transition } from "../Common/Transition";
 import classNames from "../Unit/classNames";
 import "./style.scss";
+import { PopupContext } from "./Unit/context";
+import { useState } from "react";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
@@ -32,10 +34,42 @@ export interface PopupProps {
     className?: string;
 
     style?: React.CSSProperties;
+
+    /**
+     * 当背景被点击到时
+     */
+    onBgClick?: () => void;
+
+    /**
+     * 当弹框的主体被点击到时
+     */
+    onMainClick?: () => void;
+    /**
+     * 当过渡动画结束时
+     */
+    handleTransitionEnd?: () => void;
+    /**
+     * 当过渡动画结束时
+     */
+    handleTransitionCancel?: () => void;
+    /**
+     * 当过渡动画结束时
+     */
+    handleTransitionStart?: () => void;
 }
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-export const Popup: React.FC<PopupProps> = ({ show, children, className, style }) => {
+export const Popup: React.FC<PopupProps> = ({
+    show,
+    children,
+    className,
+    style,
+    onBgClick,
+    onMainClick,
+    handleTransitionCancel,
+    handleTransitionStart,
+    handleTransitionEnd,
+}) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
     /***
@@ -48,6 +82,8 @@ export const Popup: React.FC<PopupProps> = ({ show, children, className, style }
         from: undefined,
         to: undefined,
     });
+
+    const [transitionStatus, setTransitionStatus] = useState<"end" | "cancel" | false>(false);
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
@@ -70,29 +106,48 @@ export const Popup: React.FC<PopupProps> = ({ show, children, className, style }
                 from: showRef.current.to,
                 to: show,
             };
+            setTransitionStatus(false);
         }
     }
 
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     const node = createPortal(
-        <div className="popup_wrapper">
-            <Transition
-                show={show}
-                animationType="fade"
-                className={"popup_bg"}
-                firstAnimation={true}
-            />
+        <PopupContext.Provider
+            value={{
+                show,
+                transitionStatus,
+            }}
+        >
+            <div className="popup_wrapper">
+                <Transition
+                    show={show}
+                    animationType="fade"
+                    className={"popup_bg"}
+                    firstAnimation={true}
+                    onClick={onBgClick}
+                />
 
-            <Transition
-                show={show}
-                firstAnimation={true}
-                animationType="inBottom"
-                className={classNames(className, "popup_main")}
-                style={style}
-            >
-                {children}
-            </Transition>
-        </div>,
+                <Transition
+                    show={show}
+                    onClick={onMainClick}
+                    firstAnimation={true}
+                    animationType="inBottom"
+                    className={classNames(className, "popup_main")}
+                    style={style}
+                    handleTransitionEnd={() => {
+                        setTransitionStatus("end");
+                        handleTransitionEnd?.();
+                    }}
+                    handleTransitionCancel={() => {
+                        setTransitionStatus("cancel");
+                        handleTransitionCancel?.();
+                    }}
+                    handleTransitionStart={handleTransitionStart}
+                >
+                    {children}
+                </Transition>
+            </div>
+        </PopupContext.Provider>,
         mountElement(),
     );
 

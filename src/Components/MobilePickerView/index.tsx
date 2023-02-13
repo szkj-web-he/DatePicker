@@ -9,8 +9,10 @@
 import React, { useRef } from "react";
 import classNames from "../Unit/classNames";
 import "./style.scss";
-import { PickerColumn } from "./Unit/PickerColumn";
+import { EventProps, PickerColumn } from "./Unit/PickerColumn";
 import { ColScrollProps } from "./Unit/type";
+import { forwardRef } from "react";
+import { useImperativeHandle } from "react";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
@@ -74,23 +76,47 @@ export interface MobilePickerViewProps {
     onScroll?: (colId: string, scrollData: ColScrollProps) => void;
 }
 
-export const MobilePickerView: React.FC<MobilePickerViewProps> = ({
-    className,
-    style,
-    itemHeight = "3.2rem",
-    viewHeight = "21.6rem",
-    margin = "0.4rem",
-    options,
-    values,
-    onChange,
-    onScroll,
-}) => {
+export interface MobilePickerEventProps {
+    /**
+     * 指定某列 滚动到某个item上
+     * @param colId
+     * @param colItemId
+     * @returns
+     */
+    scrollTo: (colId: string, colItemId: string) => void;
+}
+
+const Temp: React.ForwardRefRenderFunction<MobilePickerEventProps, MobilePickerViewProps> = (
+    {
+        className,
+        style,
+        itemHeight = "3.2rem",
+        viewHeight = "21.6rem",
+        margin = "0.4rem",
+        options,
+        values,
+        onChange,
+        onScroll,
+    },
+    ref,
+) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
     const viewRef = useRef<HTMLDivElement | null>(null);
+
+    const pickerEvent = useRef<Record<string, EventProps | null>>({});
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
+
+    useImperativeHandle(ref, () => {
+        return {
+            scrollTo: (id, colItemId) => {
+                pickerEvent.current[id]?.scrollToId(colItemId);
+            },
+        };
+    });
+
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
@@ -113,6 +139,9 @@ export const MobilePickerView: React.FC<MobilePickerViewProps> = ({
                             onChange={(res) => {
                                 onChange?.(col.id, res);
                             }}
+                            ref={(e) => {
+                                pickerEvent.current[col.id] = e;
+                            }}
                             viewElement={viewRef}
                             onScroll={(res) => {
                                 onScroll?.(col.id, res);
@@ -126,3 +155,4 @@ export const MobilePickerView: React.FC<MobilePickerViewProps> = ({
     );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */
+export const MobilePickerView = forwardRef(Temp);

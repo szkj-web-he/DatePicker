@@ -57,7 +57,6 @@ export const getItemsTranslateY = (
             id: optionsId[i],
         });
     }
-    console.log(JSON.stringify(arr));
 
     return arr;
 };

@@ -6,13 +6,21 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import React, { MutableRefObject, useRef, useState } from "react";
+import React, {
+    MutableRefObject,
+    useImperativeHandle,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from "react";
+import { usePopupContext } from "../../Popup/Unit/context";
 import classNames from "../../Unit/classNames";
 import { mul, sub, sum, toDiv } from "../../Unit/math";
 import { useUnmount } from "./../../Hooks/useUnmount";
 import { getItemsTranslateY, ItemRectData } from "./getItemsTranslateY";
-import { useEffect } from "react";
 import { ColScrollProps } from "./type";
+import { useLatest } from "./../../Hooks/useLatest";
+import { forwardRef } from "react";
 
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
@@ -50,17 +58,21 @@ export interface PickerColumnProps {
     onScroll?: (res: ColScrollProps) => void;
 }
 
+export interface EventProps {
+    /**
+     * 滚动到id位置
+     * @param id
+     * @returns
+     */
+    scrollToId: (id: string) => void;
+}
+
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-export const PickerColumn: React.FC<PickerColumnProps> = ({
-    value,
-    options,
-    itemHeight,
-    onChange,
-    margin,
-    viewElement,
-    onScroll,
-}) => {
+const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
+    { value, options, itemHeight, onChange, margin, viewElement, onScroll },
+    eventProps,
+) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
 
@@ -109,6 +121,19 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
      */
     const isTouchMove = useRef(false);
 
+    /**
+     * 如果嵌套再popup组件里的话
+     * 需要获取它的过渡状态
+     */
+    const { show, transitionStatus } = usePopupContext();
+
+    /**
+     *
+     */
+    const valueRef = useLatest(value);
+
+    const optionsRef = useLatest(options);
+
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
@@ -123,45 +148,58 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
         isTouchMove.current = false;
     });
 
-    useEffect(() => {
-        itemsTranslateY.current = getItemsTranslateY(
-            translateYRef.current,
-            options.map((item) => item.id),
-            ref.current,
-            viewElement.current,
-        );
+    useLayoutEffect(() => {
+        if (show && transitionStatus) {
+            itemsTranslateY.current = getItemsTranslateY(
+                translateYRef.current,
+                optionsRef.current.map((item) => item.id),
+                ref.current,
+                viewElement.current,
+            );
 
-        const arr = itemsTranslateY.current ?? [];
-        for (let i = 0; i < arr.length; ) {
-            const item = arr[i];
-            if (item.id === value) {
-                translateYRef.current = item.translateY;
-                setTranslateY(item.translateY);
-                i = arr.length;
-            } else {
-                ++i;
+            const arr = itemsTranslateY.current ?? [];
+            for (let i = 0; i < arr.length; ) {
+                const item = arr[i];
+
+                if (item.id === valueRef.current) {
+                    translateYRef.current = item.translateY;
+                    setTranslateY(item.translateY);
+                    i = arr.length;
+                } else {
+                    ++i;
+                }
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value, options]);
+    }, [show, transitionStatus]);
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
 
+    useImperativeHandle(eventProps, () => ({
+        scrollToId: (id: string) => {
+            jumpTo(id, 200);
+        },
+    }));
+
     /**
      * item的点击事件
-     * @param index
      */
-    const handleItemClick = (index: number) => {
-        const item = itemsTranslateY.current?.[index];
-        if (item) {
-            toBeValue(item.translateY);
+    const jumpTo = (id: string, ms?: number) => {
+        const arr = itemsTranslateY.current ?? [];
+        for (let i = 0; i < arr.length; ) {
+            const item = arr[i];
+            if (item.id === id) {
+                toBeValue(item.translateY, ms);
+
+                i = arr.length;
+            } else {
+                ++i;
+            }
         }
 
-        if (item && item.id !== value) {
-            onChange?.(item.id);
-        }
+        onChange?.(id);
     };
 
     /**
@@ -198,7 +236,7 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
      */
     const getScrollData = () => {
         const el = ref.current;
-        const scrollEl = ref.current?.getElementsByClassName("picker_scroller") as
+        const scrollEl = ref.current?.getElementsByClassName("picker_scroller")[0] as
             | HTMLElement
             | undefined;
 
@@ -251,27 +289,52 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
     /**
      * 将偏移值变着它
      * @param end
+     * @param ms 有没有时间限制
      * @returns
      */
-    const toBeValue = (end: number) => {
-        console.log("toBeValue", end);
-        console.log("current", translateYRef.current);
-
+    const toBeValue = (end: number, ms?: number) => {
         intervalTimer.current && window.clearInterval(intervalTimer.current);
 
         if (end === translateYRef.current) {
             return;
         }
+
+        if (ms === 0) {
+            /**
+             * 如果没有过渡时间
+             */
+            translateYRef.current = end;
+            setTranslateY(translateYRef.current);
+            return;
+        }
+
         let marginVal = 0;
-        if (end > translateYRef.current) {
-            marginVal = 1;
+        let startTime: number | null = null;
+        if (ms === undefined) {
+            if (end > translateYRef.current) {
+                marginVal = 1;
+            } else {
+                marginVal = -1;
+            }
         } else {
-            marginVal = -1;
+            startTime = Date.now();
+            marginVal = (end - translateYRef.current) / ms;
         }
 
         intervalTimer.current = window.setInterval(() => {
-            const value = sum(translateYRef.current, marginVal);
-            if (Math.abs(sub(end, value)) < 1) {
+            let moveVal = marginVal;
+            if (startTime) {
+                const currentTime = Date.now();
+                const offsetTimeVal = currentTime - startTime;
+                startTime = currentTime;
+                moveVal = mul(offsetTimeVal * marginVal);
+            }
+            const value = sum(translateYRef.current, moveVal);
+
+            if (
+                (moveVal > 0 && sub(end, value) <= moveVal) ||
+                (moveVal < 0 && sub(end, value) >= moveVal)
+            ) {
                 translateYRef.current = end;
                 setTranslateY(translateYRef.current);
                 getScrollData();
@@ -291,7 +354,6 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
 
     const findTopNode = () => {
         intervalTimer.current && window.clearInterval(intervalTimer.current);
-        console.log("findTopNode");
 
         const itemsRect = itemsTranslateY.current;
 
@@ -328,12 +390,11 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
     };
 
     /**
-     * 找到小于视口的top值
+     * 找到大于视口的top值
      * 且top值最相近的一个节点
      */
     const findUnderNode = () => {
         intervalTimer.current && window.clearInterval(intervalTimer.current);
-        console.log("findUnderNode");
 
         const itemsRect = itemsTranslateY.current;
 
@@ -462,15 +523,7 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
                     onChange?.(lastNode.id);
                 }
             } else {
-                for (let i = 0; i < itemsTranslateYData.length; ) {
-                    const item = itemsTranslateYData[i];
-                    if (item.id === value) {
-                        toBeValue(item.translateY);
-                        i = itemsTranslateYData.length;
-                    } else {
-                        ++i;
-                    }
-                }
+                findUnderNode();
             }
         }
     };
@@ -486,12 +539,10 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
         if (!isTouchMove.current) {
             return;
         }
-
         isTouchMove.current = false;
 
         let startTime = Date.now();
         const currentSpeed = lastTouchSpeed.current;
-        console.log("当前速度", currentSpeed);
 
         const minSpeed = 0.5;
 
@@ -566,6 +617,9 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
      * 不触发自动滚动
      */
     const handleTouchCancel = () => {
+        if (!isTouchMove.current) {
+            return;
+        }
         findSelectNode();
         isTouchMove.current = false;
     };
@@ -594,13 +648,9 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
                             className={classNames("picker_item", {
                                 picker_item_selected: option.id === value,
                             })}
-                            onClick={() => handleItemClick(index)}
+                            onClick={() => jumpTo(option.id)}
                         >
-                            <div className="picker_itemContent">
-                                {option.content}
-                                {/* <span className="picker_itemData">{option.content}</span>
-                                <span className="picker_itemUnit">{unit[name]}</span> */}
-                            </div>
+                            <div className="picker_itemContent">{option.content}</div>
                         </div>
                     );
                 })}
@@ -609,3 +659,4 @@ export const PickerColumn: React.FC<PickerColumnProps> = ({
     );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */
+export const PickerColumn = forwardRef(Temp);
