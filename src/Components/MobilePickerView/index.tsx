@@ -137,7 +137,6 @@ const Temp: React.ForwardRefRenderFunction<MobilePickerEventProps, MobilePickerV
                             itemHeight={itemHeight}
                             margin={margin}
                             onChange={(res) => {
-                                console.log(res, col.id);
                                 onChange?.(col.id, res);
                             }}
                             ref={(e) => {
