@@ -39,7 +39,6 @@ export const getItemsTranslateY = (
      * 所有的Item
      */
     const items = el.getElementsByClassName("picker_item");
-    console.clear();
     /**
      *
      */
