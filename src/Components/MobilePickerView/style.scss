@@ -47,7 +47,12 @@
 
 .picker_itemContent {
     width: 56px;
-    vertical-align: text-bottom;
+    text-align: center;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: row nowrap;
 }
 
 .picker_highlight {

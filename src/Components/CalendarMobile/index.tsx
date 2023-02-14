@@ -120,12 +120,7 @@ export const CalendarMobile: React.FC<CalendarMobileProps> = ({
         for (let i = 1; i <= 12; i++) {
             nodes.push({
                 id: i.toString(),
-                content: (
-                    <>
-                        <span className="calendarMobile_itemContent">{i}</span>
-                        <span className="calendarMobile_itemUnit">月</span>
-                    </>
-                ),
+                content: <span className="calendarMobile_itemContent">{i}月</span>,
             });
         }
         return nodes;

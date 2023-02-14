@@ -10,12 +10,7 @@ export const getYearList = (end: number, start = 1970): Array<NodeProps> => {
     for (let i = start; i <= end; i++) {
         nodes.push({
             id: i.toString(),
-            content: (
-                <>
-                    <span className="calendarMobile_itemContent">{i}</span>
-                    <span className="calendarMobile_itemUnit">年</span>
-                </>
-            ),
+            content: <span className="calendarMobile_itemContent">{i}年</span>,
         });
     }
     return nodes;

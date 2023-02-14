@@ -16,12 +16,7 @@ export const getDays = (year: number, month: number): Array<NodeProps> => {
     for (let i = 1; i <= days; i++) {
         nodes.push({
             id: i.toString(),
-            content: (
-                <>
-                    <span className="calendarMobile_itemContent">{i}</span>
-                    <span className="calendarMobile_itemUnit">日</span>
-                </>
-            ),
+            content: <span className="calendarMobile_itemContent">{i}日</span>,
         });
     }
     return nodes;

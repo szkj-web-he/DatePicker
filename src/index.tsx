@@ -5,9 +5,9 @@ import "./style.scss";
 import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
-// import VConsole from "vconsole";
+import VConsole from "vconsole";
 
-// new VConsole();
+new VConsole();
 
 export const comms = new PluginComms({
     defaultConfig: new ConfigYML(),

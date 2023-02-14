@@ -39,7 +39,7 @@ export const getItemsTranslateY = (
      * 所有的Item
      */
     const items = el.getElementsByClassName("picker_item");
-
+    console.clear();
     /**
      *
      */
@@ -50,7 +50,6 @@ export const getItemsTranslateY = (
         const itemRect = item.getBoundingClientRect();
 
         const y = viewRect.top - itemRect.top + translateY;
-
         arr.push({
             translateY: y,
             height: item.offsetHeight,
