@@ -7,6 +7,7 @@
 /* <------------------------------------ **** CONSTANT IMPORT START **** ------------------------------------ */
 /** Import all the reference constant after this line */
 @use "../../Constant/color.scss" as *;
+@use "../../Constant/font.scss" as *;
 
 /* <------------------------------------ **** CONSTANT IMPORT END **** ------------------------------------ */
 
@@ -45,6 +46,7 @@
     padding: 0 3rem 0 1rem;
     outline: none;
     transition: border-color 0.2s ease, color 0.2s ease;
+    @include c_body_3();
     &:hover {
         border-color: #67cdd6;
         .calendarInput_calendarIcon {

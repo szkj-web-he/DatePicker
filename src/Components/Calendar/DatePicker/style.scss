@@ -67,18 +67,3 @@
     color: $primary_600;
     cursor: pointer;
 }
-
-.date_picker_operation__confirm {
-    width: 6rem;
-    height: 3.2rem;
-    border-radius: 0.6rem;
-    background-color: $primary_600;
-    border: none;
-    color: $background;
-    cursor: pointer;
-}
-
-.date_picker_operation__confirm__disabled {
-    background-color: $neutral_300;
-    cursor: not-allowed;
-}
