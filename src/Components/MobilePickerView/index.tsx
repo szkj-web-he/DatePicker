@@ -83,7 +83,7 @@ export interface MobilePickerEventProps {
      * @param colItemId
      * @returns
      */
-    scrollTo: (colId: string, colItemId: string) => void;
+    scrollTo: (colId: string, colItemId: string, isAnimate?: boolean) => void;
 }
 
 const Temp: React.ForwardRefRenderFunction<MobilePickerEventProps, MobilePickerViewProps> = (
@@ -111,8 +111,8 @@ const Temp: React.ForwardRefRenderFunction<MobilePickerEventProps, MobilePickerV
 
     useImperativeHandle(ref, () => {
         return {
-            scrollTo: (id, colItemId) => {
-                pickerEvent.current[id]?.scrollToId(colItemId);
+            scrollTo: (id, colItemId, isAnimate) => {
+                pickerEvent.current[id]?.scrollToId(colItemId, isAnimate);
             },
         };
     });

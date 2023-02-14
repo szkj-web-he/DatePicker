@@ -236,6 +236,15 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      */
     const changeTranslateY = (val: number) => {
         translateYRef.current = sum(translateYRef.current, val);
+
+        const el = ref.current;
+        const scrollEl = el?.getElementsByClassName("picker_scroller")[0] as
+            | HTMLElement
+            | undefined;
+        if (scrollEl) {
+            scrollEl.style.transform = `translateY(${translateYRef.current}px)`;
+        }
+
         setTranslateY(translateYRef.current);
     };
 
@@ -269,7 +278,7 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
      */
     const getScrollData = () => {
         const el = ref.current;
-        const scrollEl = ref.current?.getElementsByClassName("picker_scroller")[0] as
+        const scrollEl = el?.getElementsByClassName("picker_scroller")[0] as
             | HTMLElement
             | undefined;
 
@@ -288,41 +297,40 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
         if (!isTouchStart.current) {
             return;
         }
+        window.setTimeout(() => {
+            const touchEvent = e.changedTouches[0];
 
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        const touchEvent = e.changedTouches[0];
+            const y = touchEvent.pageY;
+            isTouchMove.current = true;
 
-        const y = touchEvent.pageY;
-        isTouchMove.current = true;
-        /**
-         * 获取移动的方向
-         */
-        if (y > preData.current.y) {
-            directionRef.current = "toBottom";
-        } else if (y < preData.current.y) {
-            directionRef.current = "toTop";
-        }
+            /**
+             * 获取移动的方向
+             */
+            if (y > preData.current.y) {
+                directionRef.current = "toBottom";
+            } else if (y < preData.current.y) {
+                directionRef.current = "toTop";
+            }
 
-        /**
-         * 计算移动的距离
-         */
-        const moveY = sub(y, preData.current.y);
+            /**
+             * 计算移动的距离
+             */
+            const moveY = sub(y, preData.current.y);
+            changeTranslateY(Math.abs(moveY) > 10 ? (moveY > 0 ? 10 : -5) : moveY);
 
-        changeTranslateY(moveY);
+            getScrollData();
 
-        getScrollData();
+            preData.current.y = y;
+            /**
+             * 计算速度
+             */
 
-        preData.current.y = y;
-        /**
-         * 计算速度
-         */
+            const time = Date.now();
 
-        const time = Date.now();
+            lastTouchSpeed.current = toDiv(moveY, sub(time, preData.current.time));
 
-        lastTouchSpeed.current = toDiv(moveY, sub(time, preData.current.time));
-
-        preData.current.time = time;
+            preData.current.time = time;
+        });
     };
     useEventListener("touchmove", handleTouchMove, ref);
 
@@ -589,19 +597,46 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
         }
         isTouchMove.current = false;
 
-        let startTime = Date.now();
-        const currentSpeed = lastTouchSpeed.current;
+        /**
+         * 总时长
+         * ms
+         */
 
-        const minSpeed = 0.5;
+        const zoomVal = 200;
 
-        if (directionRef.current === undefined || Math.abs(currentSpeed) <= minSpeed) {
+        const time = Math.abs(Math.round(lastTouchSpeed.current * zoomVal));
+
+        const minTime = zoomVal * 0.5;
+
+        /**
+         * 当前时间
+         */
+        const startTime = Date.now();
+        console.clear();
+        // console.log(lastTouchSpeed.current, "速度");
+        // console.log(time, "总时长");
+
+        if (directionRef.current === undefined || Math.abs(time) <= minTime) {
             /**
-             * 没有速度
+             * 总时长如果小于100ms
              * 或者没有 移动的方向
              */
             findSelectNode();
             return;
         }
+
+        /**
+         * 每帧移动的像素
+         */
+        let startMoveVal = toDiv(Math.round(lastTouchSpeed.current * 100), 100);
+        if (Math.abs(startMoveVal) > 5) {
+            startMoveVal = directionRef.current === "toTop" ? 5 : -5;
+        }
+
+        /**
+         * 每次变小
+         */
+        const zoomOut = 0.05;
 
         const el = ref.current;
         if (!el) {
@@ -612,17 +647,22 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
             return;
         }
 
+        /**
+         * 继续
+         */
+        const toNext = (moveVal: number) => {
+            changeTranslateY(moveVal);
+            getScrollData();
+            intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
+        };
+
         // const
         const animationFrameFn = () => {
             const currentTime = Date.now();
-
-            const offsetTime = sub(currentTime, startTime);
-            startTime = currentTime;
-
-            /**
-             * 速度递减
-             */
-
+            // console.log("animationFrameFn");
+            // console.log(currentTime, "currentTime");
+            // console.log(startTime, "startTime");
+            // console.log(time, "time");
             /**
              * 加个限制
              * 当滚动的距离超过了滚动容器
@@ -631,22 +671,33 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
 
             if (
                 scrollEl.scrollHeight >= Math.abs(translateYRef.current) &&
-                translateYRef.current <= el.offsetHeight
+                translateYRef.current <= el.offsetHeight &&
+                currentTime - startTime <= time
             ) {
-                if (lastTouchSpeed.current > minSpeed) {
-                    lastTouchSpeed.current = sub(lastTouchSpeed.current, 0.2);
-                    const moveVal = mul(offsetTime, lastTouchSpeed.current);
-                    changeTranslateY(moveVal);
-                    getScrollData();
-                    intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
-                    return;
-                } else if (lastTouchSpeed.current < -1 * minSpeed) {
-                    lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.2);
-                    const moveVal = mul(offsetTime, lastTouchSpeed.current);
-                    changeTranslateY(moveVal);
-                    getScrollData();
-                    intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
-                    return;
+                if (directionRef.current === "toBottom") {
+                    //速度为正数
+                    console.log(
+                        sub(startMoveVal, zoomOut) <= 1
+                            ? "速度没了"
+                            : "有速度" + sub(startMoveVal, zoomOut).toString(),
+                    );
+                    if (sub(startMoveVal, zoomOut) > 1) {
+                        startMoveVal = sub(startMoveVal, zoomOut);
+                        toNext(startMoveVal);
+                        return;
+                    }
+                } else {
+                    console.log(
+                        sum(startMoveVal, zoomOut) >= -1
+                            ? "速度没了"
+                            : "有速度" + sum(startMoveVal, zoomOut).toString(),
+                    );
+                    //速度为负数
+                    if (sum(startMoveVal, zoomOut) < -1) {
+                        startMoveVal = sum(startMoveVal, zoomOut);
+                        toNext(startMoveVal);
+                        return;
+                    }
                 }
             }
 
@@ -656,11 +707,11 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
              */
             intervalTimer.current && window.cancelAnimationFrame(intervalTimer.current);
 
-            if (directionRef.current === "toBottom") {
-                findTopNode();
-                return;
-            }
-            findUnderNode();
+            // if (directionRef.current === "toBottom") {
+            //     findTopNode();
+            //     return;
+            // }
+            // findUnderNode();
         };
         intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
     };

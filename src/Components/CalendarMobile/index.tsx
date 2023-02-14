@@ -57,6 +57,7 @@ export const CalendarMobile: React.FC<CalendarMobileProps> = ({
     const [playedYear, setPlayedYear] = useState<number>(1920);
     const [playedMonth, setPlayedMonth] = useState<number>(1);
     const [playedDay, setPlayedDay] = useState<number>(1);
+    const playedDayRef = useLatest(playedDay);
 
     const [yearList, setYearList] = useState<Array<NodeProps>>([]);
     const [dayList, setDayList] = useState<Array<NodeProps>>([]);
@@ -94,11 +95,9 @@ export const CalendarMobile: React.FC<CalendarMobileProps> = ({
     }, [show]);
 
     useEffect(() => {
-        const date = getDateInfo(dateValueRef.current ?? new Date()) as DateInfoProps;
-        if (playedYear === date.year && playedMonth === date.month) {
-            mobilePickerEvent.current.scrollTo("day", date.day.toString());
-        } else {
-            mobilePickerEvent.current.scrollTo("day", "1");
+        const date = new Date(playedYear, playedMonth, 0).getDate();
+        if (playedDayRef.current > date) {
+            mobilePickerEvent.current.scrollTo("day", date.toString());
         }
 
         setDayList(() => {
