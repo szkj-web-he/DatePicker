@@ -609,14 +609,14 @@ const Temp: React.ForwardRefRenderFunction<EventProps, PickerColumnProps> = (
                 translateYRef.current <= el.offsetHeight
             ) {
                 if (lastTouchSpeed.current > minSpeed) {
-                    lastTouchSpeed.current = sub(lastTouchSpeed.current, 0.1);
+                    lastTouchSpeed.current = sub(lastTouchSpeed.current, 0.2);
                     const moveVal = mul(offsetTime, lastTouchSpeed.current);
                     changeTranslateY(moveVal);
                     getScrollData();
                     intervalTimer.current = window.requestAnimationFrame(animationFrameFn);
                     return;
                 } else if (lastTouchSpeed.current < -1 * minSpeed) {
-                    lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.1);
+                    lastTouchSpeed.current = sum(lastTouchSpeed.current, 0.2);
                     const moveVal = mul(offsetTime, lastTouchSpeed.current);
                     changeTranslateY(moveVal);
                     getScrollData();

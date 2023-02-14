@@ -131,26 +131,6 @@ export const CalendarMobile: React.FC<CalendarMobileProps> = ({
         return nodes;
     };
 
-    /**
-     * 选中每个字段的可选范围
-     */
-
-    const initOptions = () => {
-        return [
-            {
-                id: "year",
-                cols: yearList,
-            },
-            {
-                id: "month",
-                cols: getMonthList(),
-            },
-            {
-                id: "day",
-                cols: dayList,
-            },
-        ];
-    };
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     return (
         <Fragment>
