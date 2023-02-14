@@ -39,6 +39,10 @@
     justify-content: center;
     align-items: center;
     flex-flow: row nowrap;
+    transition: all 0.2s linear;
+    &.picker_item_selected {
+        color: #22a6b3;
+    }
 }
 
 .picker_itemContent {
