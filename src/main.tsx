@@ -32,10 +32,10 @@ const Temp: React.FC = () => {
 
     useEffect(() => {
         comms.state = {
-            year: date?.getFullYear(),
-            month: date ? date.getMonth() + 1 : undefined,
-            day: date?.getDate(),
-            week: date?.getDay() === 0 ? 7 : date?.getDay(),
+            [comms.config?.options?.[0].code ?? "year"]: date?.getFullYear(),
+            [comms.config?.options?.[1].code ?? "month"]: date?.getFullYear(),
+            [comms.config?.options?.[2].code ?? "day"]: date?.getFullYear(),
+            [comms.config?.options?.[3].code ?? "week"]: date?.getFullYear(),
         };
     }, [date]);
 
