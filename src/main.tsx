@@ -16,15 +16,19 @@ import { comms } from "./index";
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
 
+interface TempProps {
+    date?: Date;
+}
+
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-const Temp: React.FC = () => {
+const Temp: React.FC<TempProps> = ({ date: DateVal }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
 
     const isMobile = useMobile();
 
-    const [date, setDate] = useState<Date>();
+    const [date, setDate] = useState<Date | undefined>(DateVal);
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */

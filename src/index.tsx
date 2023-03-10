@@ -19,7 +19,7 @@ export const comms = new PluginComms({
         totalScore?: number;
         optionsInstruction?: string;
     };
-    state: unknown;
+    state: Record<string, string | undefined | number>;
     renderOnReady: (res: React.ReactNode) => void;
 };
 
@@ -34,12 +34,21 @@ const Main: React.FC = () => {
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
+    const yearCode = comms.config?.options?.[0].code;
+    const monthCode = comms.config?.options?.[1].code;
+    const dayCode = comms.config?.options?.[2].code;
+
+    const year = yearCode ? Number(comms.state[yearCode]) : -1;
+    const month = monthCode ? Number(comms.state[monthCode]) : -1;
+    const day = dayCode ? Number(comms.state[dayCode]) : -1;
+
+    const date = year > 0 && month > 0 && day > 0 ? new Date(year, month - 1, day) : undefined;
 
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     return (
         <div className="wrapper">
             <Header />
-            <MainContent />
+            <MainContent date={date} />
         </div>
     );
 };
