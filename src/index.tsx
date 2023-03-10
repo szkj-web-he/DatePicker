@@ -2,7 +2,7 @@ import React from "react";
 import "./font.scss";
 import "./style.scss";
 
-import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
+import { ConfigYML, PluginComms } from "@datareachable/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
 // import VConsole from "vconsole";

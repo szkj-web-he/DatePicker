@@ -35,6 +35,10 @@ const Temp: React.FC<TempProps> = ({ date: DateVal }) => {
     /************* This section will include this component parameter *************/
 
     useEffect(() => {
+        setDate(DateVal);
+    }, [DateVal]);
+
+    useEffect(() => {
         comms.state = {
             [comms.config?.options?.[0].code ?? "year"]: date?.getFullYear(),
             [comms.config?.options?.[1].code ?? "month"]: date ? date.getMonth() + 1 : undefined,
