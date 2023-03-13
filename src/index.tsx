@@ -19,7 +19,7 @@ export const comms = new PluginComms({
         totalScore?: number;
         optionsInstruction?: string;
     };
-    state: Record<string, string | undefined | number>;
+    state?: Record<string, number | string>;
     renderOnReady: (res: React.ReactNode) => void;
 };
 
@@ -38,9 +38,18 @@ const Main: React.FC = () => {
     const monthCode = comms.config?.options?.[1].code;
     const dayCode = comms.config?.options?.[2].code;
 
-    const year = yearCode ? Number(comms.state[yearCode]) : -1;
-    const month = monthCode ? Number(comms.state[monthCode]) : -1;
-    const day = dayCode ? Number(comms.state[dayCode]) : -1;
+    const stateData: Record<string, number> = {};
+    for (const key in comms.state) {
+        const keyVal = key.includes("#") ? key.split("#")[1] : undefined;
+
+        if (keyVal) {
+            stateData[keyVal] = Number(comms.state?.[key]) ?? -1;
+        }
+    }
+
+    const year = yearCode ? stateData?.[yearCode] : -1;
+    const month = monthCode ? stateData?.[monthCode] : -1;
+    const day = dayCode ? stateData?.[dayCode] : -1;
 
     const date = year > 0 && month > 0 && day > 0 ? new Date(year, month - 1, day) : undefined;
 
